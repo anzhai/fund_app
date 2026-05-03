@@ -271,12 +271,47 @@ tests/test_integration.py::TestE2EBusinessFlow::test_fund_browse_flow PASSED
 
 ---
 
+## Flutter Widget Tests
+
+### 测试结果汇总
+
+| 测试类型 | 通过 | 失败 | 总计 | 通过率 |
+|---------|------|------|------|--------|
+| Widget Tests | 16 | 0 | 16 | 100% |
+
+### 测试覆盖
+
+| 模块 | 测试内容 | 状态 |
+|------|---------|------|
+| 主页 | 底部导航, 资产卡片, 快捷操作, 收益信息 | ✅ |
+| 基金TAB | 基金列表, 基金详情, 基金代码/类型 | ✅ |
+| 组合TAB | 空状态提示 | ✅ |
+| 交易TAB | 交易功能占位 | ✅ |
+| 我的TAB | 用户菜单, 设置图标 | ✅ |
+| 导航流程 | 完整TAB切换流程 | ✅ |
+| 组件交互 | 快捷按钮点击 | ✅ |
+
+### Flutter 测试命令
+
+```bash
+cd frontend/fund_app
+flutter test
+```
+
+详细报告: [flutter-test-report.md](flutter-test-report.md)
+
+---
+
 ## 测试命令
 
 ```bash
 # 运行所有集成测试
 cd backend
 python3 -m pytest tests/test_integration.py -v
+
+# 运行Flutter Widget测试
+cd frontend/fund_app
+flutter test
 
 # 运行特定测试类
 python3 -m pytest tests/test_integration.py::TestAuthService -v
