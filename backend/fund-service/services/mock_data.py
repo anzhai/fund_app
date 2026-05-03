@@ -1,0 +1,58 @@
+MOCK_FUNDS = [
+    {
+        "fund_code": "000001",
+        "fund_name": "货币基金A",
+        "fund_type": "money_market",
+        "risk_level": "R1",
+        "nav": 1.0000,
+        "acc_nav": 1.0000,
+        "min_purchase": 100.00,
+        "purchase_fee": 0.0000,
+        "redeem_fee": 0.0000,
+        "manager_name": "张经理",
+        "company_name": "华夏基金",
+        "description": "货币市场基金，主要投资短期银行存款、央行票据等低风险品种"
+    },
+    {
+        "fund_code": "000002",
+        "fund_name": "股票基金B",
+        "fund_type": "stock",
+        "risk_level": "R5",
+        "nav": 2.5000,
+        "acc_nav": 3.2000,
+        "min_purchase": 1000.00,
+        "purchase_fee": 0.0150,
+        "redeem_fee": 0.0050,
+        "manager_name": "李经理",
+        "company_name": "易方达基金",
+        "description": "股票型基金，主要投资A股市场，追求长期资本增值"
+    },
+    {
+        "fund_code": "000003",
+        "fund_name": "混合基金C",
+        "fund_type": "hybrid",
+        "risk_level": "R3",
+        "nav": 1.8000,
+        "acc_nav": 2.1000,
+        "min_purchase": 500.00,
+        "purchase_fee": 0.0120,
+        "redeem_fee": 0.0030,
+        "manager_name": "王经理",
+        "company_name": "嘉实基金",
+        "description": "混合型基金，股债平衡配置，追求稳健收益"
+    },
+    {
+        "fund_code": "000004",
+        "fund_name": "FOF基金D",
+        "fund_type": "fof",
+        "risk_level": "R4",
+        "nav": 1.2000,
+        "acc_nav": 1.4500,
+        "min_purchase": 1000.00,
+        "purchase_fee": 0.0100,
+        "redeem_fee": 0.0025,
+        "manager_name": "赵经理",
+        "company_name": "南方基金",
+        "description": "基金中基金，主要投资于其他开放式基金，分散风险"
+    },
+]
