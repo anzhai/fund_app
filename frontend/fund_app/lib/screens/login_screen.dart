@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../main.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -44,6 +45,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('登录成功')),
+        );
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainPage()),
         );
       }
     } catch (e) {

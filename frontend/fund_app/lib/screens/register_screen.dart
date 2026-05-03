@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../main.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -64,10 +65,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   String? _validateIdCard(String? value) {
-    if (value == null || value.isEmpty) {
-      return '请输入身份证号';
-    }
-    if (!RegExp(r'^\d{17}[\dXx]$').hasMatch(value)) {
+    if (value != null && value.isNotEmpty && !RegExp(r'^\d{17}[\dXx]$').hasMatch(value)) {
       return '身份证号格式不正确';
     }
     return null;
@@ -84,15 +82,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       await authProvider.register(
         phone: _phoneController.text,
         password: _passwordController.text,
-        idCard: _idCardController.text,
+        idCard: _idCardController.text.isEmpty ? null : _idCardController.text,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('注册成功，请登录')),
+          const SnackBar(content: Text('注册成功')),
         );
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          MaterialPageRoute(builder: (_) => const MainPage()),
         );
       }
     } catch (e) {
@@ -199,17 +197,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 16),
 
-              // ID card input
+              // ID card input (optional)
               TextFormField(
                 controller: _idCardController,
                 decoration: const InputDecoration(
-                  labelText: '身份证号',
+                  labelText: '身份证号(选填)',
                   prefixIcon: Icon(Icons.badge),
                   border: OutlineInputBorder(),
-                  hintText: '请输入18位身份证号',
+                  hintText: '请输入18位身份证号(选填)',
                 ),
                 keyboardType: TextInputType.text,
-                validator: _validateIdCard,
+                validator: (value) {
+                  if (value != null && value.isNotEmpty && !RegExp(r'^\d{17}[\dXx]$').hasMatch(value)) {
+                    return '身份证号格式不正确';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 24),
 
