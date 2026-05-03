@@ -4,10 +4,10 @@ services:
   mysql:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: root123
-      MYSQL_DATABASE: fund_app
-      MYSQL_USER: fund_user
-      MYSQL_PASSWORD: fund_pass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-fund_app}
+      MYSQL_USER: ${MYSQL_USER:-fund_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-fund_pass}
     ports:
       - "3306:3306"
     volumes:
@@ -37,8 +37,8 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
 
   auth-service:
     build:
@@ -47,8 +47,9 @@ services:
     ports:
       - "8001:8001"
     environment:
-      DATABASE_URL: mysql+pymysql://fund_user:fund_pass@mysql:3306/fund_app
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://fund_user:fund_pass@mysql:3306/fund_app}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       mysql:
         condition: service_healthy
@@ -62,8 +63,8 @@ services:
     ports:
       - "8002:8002"
     environment:
-      DATABASE_URL: mysql+pymysql://fund_user:fund_pass@mysql:3306/fund_app
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://fund_user:fund_pass@mysql:3306/fund_app}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
       mysql:
         condition: service_healthy
@@ -75,8 +76,8 @@ services:
     ports:
       - "8003:8003"
     environment:
-      DATABASE_URL: mysql+pymysql://fund_user:fund_pass@mysql:3306/fund_app
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://fund_user:fund_pass@mysql:3306/fund_app}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
       mysql:
         condition: service_healthy
@@ -88,8 +89,8 @@ services:
     ports:
       - "8004:8004"
     environment:
-      DATABASE_URL: mysql+pymysql://fund_user:fund_pass@mysql:3306/fund_app
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://fund_user:fund_pass@mysql:3306/fund_app}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
       mysql:
         condition: service_healthy
@@ -101,8 +102,8 @@ services:
     ports:
       - "8005:8005"
     environment:
-      DATABASE_URL: mysql+pymysql://fund_user:fund_pass@mysql:3306/fund_app
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://fund_user:fund_pass@mysql:3306/fund_app}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
     depends_on:
       mysql:
         condition: service_healthy

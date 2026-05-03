@@ -1,11 +1,11 @@
-from sqlalchemy import Column, String, Numeric, Integer, ForeignKey, DateTime
+from sqlalchemy import Column, String, Numeric, Integer, DateTime
 from models.base import BaseModel
 from datetime import datetime
 
 class TradeOrder(BaseModel):
     __tablename__ = "trade_orders"
 
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, nullable=False)  # References users.id (cross-service)
     fund_code = Column(String(10), nullable=False)
     fund_name = Column(String(100), nullable=False)
     trade_type = Column(String(20), nullable=False)
@@ -22,15 +22,15 @@ class TradeOrder(BaseModel):
 class Wallet(BaseModel):
     __tablename__ = "wallets"
 
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    user_id = Column(Integer, unique=True, nullable=False)  # References users.id (cross-service)
     balance = Column(Numeric(15, 2), default=0.00)
     frozen_balance = Column(Numeric(15, 2), default=0.00)
 
 class WalletTransaction(BaseModel):
     __tablename__ = "wallet_transactions"
 
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    wallet_id = Column(Integer, ForeignKey("wallets.id"), nullable=False)
+    user_id = Column(Integer, nullable=False)
+    wallet_id = Column(Integer, nullable=False)
     amount = Column(Numeric(15, 2), nullable=False)
     transaction_type = Column(String(20), nullable=False)
     status = Column(String(20), default="completed")

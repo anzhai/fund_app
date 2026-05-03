@@ -1,11 +1,11 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Date, Boolean, Text
+from sqlalchemy import Column, String, Integer, Date, Boolean, Text, DateTime
 from models.base import BaseModel
 from datetime import datetime
 
 class BankCard(BaseModel):
     __tablename__ = "bank_cards"
 
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, nullable=False)  # References users.id (cross-service)
     bank_name = Column(String(50), nullable=False)
     bank_code = Column(String(20), nullable=False)
     card_number = Column(String(30), nullable=False)
@@ -16,7 +16,7 @@ class BankCard(BaseModel):
 class Account(BaseModel):
     __tablename__ = "accounts"
 
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    user_id = Column(Integer, unique=True, nullable=False)  # References users.id (cross-service)
     id_card = Column(String(18), nullable=False)
     id_card_type = Column(String(10), default="id_card")
     real_name = Column(String(50), nullable=False)
@@ -30,7 +30,7 @@ class Account(BaseModel):
 class RiskQuestionnaire(BaseModel):
     __tablename__ = "risk_questionnaires"
 
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    user_id = Column(Integer, unique=True, nullable=False)
     answers = Column(Text, nullable=False)
     score = Column(Integer, default=0)
     risk_level = Column(String(10), nullable=True)
