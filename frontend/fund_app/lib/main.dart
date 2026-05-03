@@ -1,4 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'services/api_service.dart';
+import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/fund_list_screen.dart';
+import 'screens/portfolio_screen.dart';
+import 'screens/trade_screen.dart';
+import 'screens/user_screen.dart';
+import 'providers/auth_provider.dart';
 
 void main() {
   runApp(const FundApp());
@@ -9,14 +18,70 @@ class FundApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '基金组合管理',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ],
+      child: MaterialApp(
+        title: '基金组合管理',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          useMaterial3: true,
+          appBarTheme: const AppBarTheme(
+            centerTitle: true,
+            elevation: 0,
+          ),
+        ),
+        home: const SplashScreen(),
+        debugShowCheckedModeBanner: false,
       ),
-      home: const MainPage(),
-      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({Key? key}) : super(key: key);
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    await Future.delayed(const Duration(seconds: 1));
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    await authProvider.checkAuth();
+    
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => authProvider.isAuthenticated ? const MainPage() : const LoginScreen(),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.account_balance, size: 80, color: Theme.of(context).primaryColor),
+            const SizedBox(height: 20),
+            const Text('基金组合管理', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 40),
+            const CircularProgressIndicator(),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -32,11 +97,11 @@ class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = const [
-    HomeTab(),
-    FundTab(),
-    PortfolioTab(),
-    TradeTab(),
-    UserTab(),
+    HomeScreen(),
+    FundListScreen(),
+    PortfolioScreen(),
+    TradeScreen(),
+    UserScreen(),
   ];
 
   @override
@@ -48,11 +113,11 @@ class _MainPageState extends State<MainPage> {
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: '首页'),
-          BottomNavigationBarItem(icon: Icon(Icons.account_balance_outlined), label: '基金'),
-          BottomNavigationBarItem(icon: Icon(Icons.pie_chart_outline), label: '组合'),
-          BottomNavigationBarItem(icon: Icon(Icons.swap_horiz_outlined), label: '交易'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: '我的'),
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: '首页'),
+          BottomNavigationBarItem(icon: Icon(Icons.account_balance_outlined), activeIcon: Icon(Icons.account_balance), label: '基金'),
+          BottomNavigationBarItem(icon: Icon(Icons.pie_chart_outline), activeIcon: Icon(Icons.pie_chart), label: '组合'),
+          BottomNavigationBarItem(icon: Icon(Icons.swap_horiz_outlined), activeIcon: Icon(Icons.swap_horiz), label: '交易'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: '我的'),
         ],
       ),
     );

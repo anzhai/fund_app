@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     salt VARCHAR(32) NOT NULL,
     user_type VARCHAR(20) DEFAULT 'direct_sales',
+    id_card_type VARCHAR(10) DEFAULT 'id_card',
     risk_level VARCHAR(10),
     risk_expire_date DATETIME,
     is_verified BOOLEAN DEFAULT FALSE,
@@ -180,6 +181,29 @@ CREATE TABLE IF NOT EXISTS risk_questionnaires (
     expire_date DATE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_user_id (user_id)
+);
+
+-- Create sip_plans table
+CREATE TABLE IF NOT EXISTS sip_plans (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    fund_code VARCHAR(10) NOT NULL,
+    fund_name VARCHAR(100) NOT NULL,
+    amount DECIMAL(15, 2) NOT NULL,
+    frequency VARCHAR(20) NOT NULL,
+    day_of_period INT NOT NULL,
+    start_date DATETIME NOT NULL,
+    end_date DATETIME,
+    next_deduction_date DATETIME NOT NULL,
+    status VARCHAR(20) DEFAULT 'active',
+    sip_type VARCHAR(20) DEFAULT 'regular',
+    total_invested DECIMAL(15, 2) DEFAULT 0.00,
+    total_shares DECIMAL(15, 4) DEFAULT 0.00,
+    pay_method VARCHAR(20) DEFAULT 'wallet',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_user_id (user_id),
+    INDEX idx_fund_code (fund_code)
 );
 
 -- Insert mock funds
