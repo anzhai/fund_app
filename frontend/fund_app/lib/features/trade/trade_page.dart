@@ -11,8 +11,8 @@ class _TradePageState extends State<TradePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Trade')),
-      body: const Center(child: Text('Trade Page')),
+      appBar: AppBar(title: const Text('交易')),
+      body: const Center(child: Text('交易页面')),
     );
   }
 }

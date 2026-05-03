@@ -11,8 +11,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Portfolio')),
-      body: const Center(child: Text('Portfolio Page')),
+      appBar: AppBar(title: const Text('组合')),
+      body: const Center(child: Text('组合页面')),
     );
   }
 }

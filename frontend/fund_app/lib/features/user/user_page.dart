@@ -11,8 +11,8 @@ class _UserPageState extends State<UserPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('User')),
-      body: const Center(child: Text('User Page')),
+      appBar: AppBar(title: const Text('我的')),
+      body: const Center(child: Text('我的页面')),
     );
   }
 }
