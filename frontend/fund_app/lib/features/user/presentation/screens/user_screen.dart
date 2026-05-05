@@ -60,9 +60,7 @@ class _UserScreenState extends ConsumerState<UserScreen> {
             CircleAvatar(
               radius: 36,
               backgroundColor: Colors.blue[100],
-              child: state.user?.avatar != null
-                  ? ClipOval(child: Image.network(state.user!.avatar!))
-                  : const Icon(Icons.person, size: 40, color: Colors.blue),
+              child: const Icon(Icons.person, size: 40, color: Colors.blue),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -70,13 +68,13 @@ class _UserScreenState extends ConsumerState<UserScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    state.user?.username ?? '用户',
+                    state.user?.phone ?? '未登录',
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    state.user?.phone ?? '',
-                    style: TextStyle(color: Colors.grey[600]),
+                    'ID: ${state.user?.id ?? 0}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -95,6 +93,23 @@ class _UserScreenState extends ConsumerState<UserScreen> {
                           ),
                         ),
                       ),
+                      if (state.user?.riskLevel != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '风险等级: ${state.user!.riskLevel}',
+                            style: TextStyle(
+                              color: Colors.blue[700],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],

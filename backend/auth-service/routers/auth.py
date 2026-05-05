@@ -25,17 +25,20 @@ def generate_sms_code():
 @router.post("/register", response_model=TokenResponse)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """用户注册 - 支持手机号快速注册"""
-    # Check if user already exists
-    existing = db.query(User).filter(
-        (User.phone == user_data.phone) | (User.id_card == user_data.id_card)
-    ).first()
+    # Validate phone number format
+    import re
+    if not user_data.phone or not re.match(r'^1[3-9]\d{9}$', user_data.phone):
+        raise HTTPException(status_code=400, detail="手机号格式不正确")
+    
+    # Check if user already exists by phone only
+    existing = db.query(User).filter(User.phone == user_data.phone).first()
     if existing:
-        raise HTTPException(status_code=400, detail="用户已存在")
+        raise HTTPException(status_code=400, detail="该手机号已注册，请直接登录")
 
     salt = generate_salt()
     user = User(
         phone=user_data.phone,
-        id_card=user_data.id_card,
+        id_card=user_data.id_card if user_data.id_card else None,
         password_hash=hash_password(user_data.password, salt),
         salt=salt,
         user_type=user_data.user_type,
@@ -105,14 +108,19 @@ def send_sms_code(sms_data: SMSCodeRequest):
     if not re.match(r'^1[3-9]\d{9}$', sms_data.phone):
         raise HTTPException(status_code=400, detail="手机号格式不正确")
     
-    # Generate and store SMS code (mock - in production use SMS service)
-    code = generate_sms_code()
+    # Generate and store SMS code
+    # In test environment, use fixed code 888888 for easier testing
+    code = "888888"  # Fixed code for testing
+    
+    # For production, uncomment the following line and comment the fixed code
+    # code = generate_sms_code()
+    
     sms_codes[sms_data.phone] = code
     
     # Mock: Print code to console (in production send via SMS gateway)
     print(f"SMS Code for {sms_data.phone}: {code}")
     
-    return {"message": "验证码已发送", "expires_in": 300}  # 5 minutes
+    return {"message": "验证码已发送", "code": code, "expires_in": 300}  # 5 minutes
 
 @router.post("/refresh", response_model=TokenResponse)
 def refresh_token_endpoint(refresh_token: str, db: Session = Depends(get_db)):
