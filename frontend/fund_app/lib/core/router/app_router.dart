@@ -13,6 +13,7 @@ import '../../features/user/presentation/screens/user_screen.dart';
 import '../../features/wallet/presentation/screens/wallet_screen.dart';
 import '../../features/account/presentation/screens/account_screen.dart';
 import '../../features/account/presentation/screens/account_open_screen.dart';
+import '../../features/account/presentation/screens/account_open_success_screen.dart';
 import '../../features/account/presentation/screens/risk_assessment_screen.dart';
 import '../../features/account/presentation/screens/bank_card_screen.dart';
 import '../../features/trade/presentation/screens/trade_history_screen.dart';
@@ -108,6 +109,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/account-open',
         name: 'account-open',
         builder: (context, state) => const AccountOpenScreen(),
+      ),
+      GoRoute(
+        path: '/account-open-success',
+        name: 'account-open-success',
+        builder: (context, state) => const AccountOpenSuccessScreen(),
       ),
       GoRoute(
         path: '/account/risk-assessment',

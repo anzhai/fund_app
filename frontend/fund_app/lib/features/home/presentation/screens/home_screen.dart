@@ -68,7 +68,7 @@ class HomeScreen extends ConsumerWidget {
                 _QuickActionButton(
                   icon: Icons.account_balance_wallet,
                   label: '充值',
-                  onTap: () => context.go('/wallet'),
+                  onTap: () => _handleRecharge(context, ref),
                 ),
                 _QuickActionButton(
                   icon: Icons.shopping_cart,
@@ -83,7 +83,7 @@ class HomeScreen extends ConsumerWidget {
                 _QuickActionButton(
                   icon: Icons.history,
                   label: '记录',
-                  onTap: () => context.go('/trade/history'),
+                  onTap: () => _handleHistory(context, ref),
                 ),
               ],
             ),
@@ -127,10 +127,29 @@ class HomeScreen extends ConsumerWidget {
         context.go('/funds');
         break;
       case AccountVerificationResult.needOpenAccount:
-        context.go('/account-open');
-        break;
       case AccountVerificationResult.needRiskAssessment:
-        context.go('/account/risk-assessment');
+      case AccountVerificationResult.riskAssessmentExpired:
+      case AccountVerificationResult.riskLevelMismatch:
+        // Dialog already shown by AccountGuard
+        break;
+      case AccountVerificationResult.notLoggedIn:
+        break;
+    }
+  }
+
+  Future<void> _handleRecharge(BuildContext context, WidgetRef ref) async {
+    final result = await AccountGuard.verify(ref: ref, context: context);
+    if (!context.mounted) return;
+
+    switch (result) {
+      case AccountVerificationResult.verified:
+        context.go('/wallet');
+        break;
+      case AccountVerificationResult.needOpenAccount:
+      case AccountVerificationResult.needRiskAssessment:
+      case AccountVerificationResult.riskAssessmentExpired:
+      case AccountVerificationResult.riskLevelMismatch:
+        // Dialog already shown by AccountGuard
         break;
       case AccountVerificationResult.notLoggedIn:
         break;
@@ -148,10 +167,29 @@ class HomeScreen extends ConsumerWidget {
         );
         break;
       case AccountVerificationResult.needOpenAccount:
-        context.go('/account-open');
-        break;
       case AccountVerificationResult.needRiskAssessment:
-        context.go('/account/risk-assessment');
+      case AccountVerificationResult.riskAssessmentExpired:
+      case AccountVerificationResult.riskLevelMismatch:
+        // Dialog already shown by AccountGuard
+        break;
+      case AccountVerificationResult.notLoggedIn:
+        break;
+    }
+  }
+
+  Future<void> _handleHistory(BuildContext context, WidgetRef ref) async {
+    final result = await AccountGuard.verify(ref: ref, context: context);
+    if (!context.mounted) return;
+
+    switch (result) {
+      case AccountVerificationResult.verified:
+        context.go('/trade/history');
+        break;
+      case AccountVerificationResult.needOpenAccount:
+      case AccountVerificationResult.needRiskAssessment:
+      case AccountVerificationResult.riskAssessmentExpired:
+      case AccountVerificationResult.riskLevelMismatch:
+        // Dialog already shown by AccountGuard
         break;
       case AccountVerificationResult.notLoggedIn:
         break;

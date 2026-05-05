@@ -120,10 +120,10 @@ class _BuyTab extends ConsumerWidget {
         );
         break;
       case AccountVerificationResult.needOpenAccount:
-        context.go('/account-open');
-        break;
       case AccountVerificationResult.needRiskAssessment:
-        context.go('/account/risk-assessment');
+      case AccountVerificationResult.riskAssessmentExpired:
+      case AccountVerificationResult.riskLevelMismatch:
+        // Dialog already shown by AccountGuard
         break;
       case AccountVerificationResult.notLoggedIn:
         break;
@@ -226,10 +226,10 @@ class _SellTab extends ConsumerWidget {
         );
         break;
       case AccountVerificationResult.needOpenAccount:
-        context.go('/account-open');
-        break;
       case AccountVerificationResult.needRiskAssessment:
-        context.go('/account/risk-assessment');
+      case AccountVerificationResult.riskAssessmentExpired:
+      case AccountVerificationResult.riskLevelMismatch:
+        // Dialog already shown by AccountGuard
         break;
       case AccountVerificationResult.notLoggedIn:
         break;

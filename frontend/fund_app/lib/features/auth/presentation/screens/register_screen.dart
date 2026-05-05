@@ -37,6 +37,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
+  bool _canSendSmsCode() {
+    final phone = _phoneController.text.trim();
+    return phone.length == 11 && Validators.validatePhone(phone) == null && !_countingDown;
+  }
+
   bool _validateForm() {
     setState(() {
       _phoneError = Validators.validatePhone(_phoneController.text.trim());
@@ -120,7 +125,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         SizedBox(
                           width: 120,
                           child: OutlinedButton(
-                            onPressed: _phoneError == null && !_countingDown ? _sendSmsCode : null,
+                            onPressed: _canSendSmsCode() ? _sendSmsCode : null,
                             child: Text(_countingDown ? '$_countdownSeconds秒' : '获取验证码'),
                           ),
                         ),
@@ -232,7 +237,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _sendSmsCode() async {
     final phone = _phoneController.text.trim();
-    
+
     if (!_validateForm() || _phoneError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('请输入正确的手机号')),
@@ -242,6 +247,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     await ref.read(authProvider.notifier).sendSmsCode(phone);
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('验证码已发送（测试环境请使用 888888）')),
     );
@@ -286,11 +292,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     } else {
       // 显示错误信息
       final authState = ref.read(authProvider);
-      if (authState.error?.contains('已存在') == true || 
-          authState.error?.contains('已注册') == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('该手机号已注册，请直接登录')),
-        );
+      if (authState.error?.contains('已存在') == true ||
+          authState.error?.contains('已注册') == true ||
+          authState.error?.contains('duplicate') == true) {
+        // 账号已存在，跳转到登录页面
+        context.go('/login');
       }
     }
   }

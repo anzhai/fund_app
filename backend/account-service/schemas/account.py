@@ -2,6 +2,30 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import date, datetime
 
+class IdCardOcrRequest(BaseModel):
+    image_type: str = Field(..., description="图片类型: front(身份证正面), back(身份证反面)")
+    image_data: str = Field(..., description="Base64编码的图片数据")
+
+class IdCardOcrResponse(BaseModel):
+    real_name: Optional[str] = Field(None, description="识别到的真实姓名")
+    id_card: Optional[str] = Field(None, description="识别到的身份证号")
+    gender: Optional[str] = Field(None, description="性别")
+    nation: Optional[str] = Field(None, description="民族")
+    birth_date: Optional[str] = Field(None, description="出生日期")
+    address: Optional[str] = Field(None, description="地址")
+    id_card_expire: Optional[str] = Field(None, description="身份证有效期")
+    valid_date: Optional[str] = Field(None, description="有效期限")
+    issued_by: Optional[str] = Field(None, description="签发机关")
+
+class BankCardOcrRequest(BaseModel):
+    image_data: str = Field(..., description="Base64编码的图片数据")
+
+class BankCardOcrResponse(BaseModel):
+    bank_name: Optional[str] = Field(None, description="银行名称")
+    bank_code: Optional[str] = Field(None, description="银行代码")
+    card_number: Optional[str] = Field(None, description="银行卡号")
+    card_type: Optional[str] = Field(None, description="卡类型")
+
 class AccountCreate(BaseModel):
     id_card: str = Field(..., description="身份证号")
     real_name: str = Field(..., description="真实姓名")

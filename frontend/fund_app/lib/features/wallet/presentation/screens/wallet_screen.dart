@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/error_widget.dart';
@@ -156,10 +155,12 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
         _showRechargeDialog(context);
         break;
       case AccountVerificationResult.needOpenAccount:
-        context.go('/account-open');
-        break;
       case AccountVerificationResult.needRiskAssessment:
-        context.go('/account/risk-assessment');
+      case AccountVerificationResult.riskAssessmentExpired:
+        // Dialog already shown by AccountGuard
+        break;
+      case AccountVerificationResult.riskLevelMismatch:
+        // Dialog already shown by AccountGuard
         break;
       case AccountVerificationResult.notLoggedIn:
         break;
@@ -175,10 +176,12 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
         _showWithdrawDialog(context);
         break;
       case AccountVerificationResult.needOpenAccount:
-        context.go('/account-open');
-        break;
       case AccountVerificationResult.needRiskAssessment:
-        context.go('/account/risk-assessment');
+      case AccountVerificationResult.riskAssessmentExpired:
+        // Dialog already shown by AccountGuard
+        break;
+      case AccountVerificationResult.riskLevelMismatch:
+        // Dialog already shown by AccountGuard
         break;
       case AccountVerificationResult.notLoggedIn:
         break;

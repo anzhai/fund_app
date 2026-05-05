@@ -84,10 +84,11 @@ class _RiskAssessmentScreenState extends ConsumerState<RiskAssessmentScreen> {
   }
 
   void _showResultDialog(String level) {
+    final navigatorContext = context;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('风险评测结果'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -101,8 +102,8 @@ class _RiskAssessmentScreenState extends ConsumerState<RiskAssessmentScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
-              context.go('/');
+              Navigator.of(dialogContext).pop();
+              navigatorContext.go('/');
             },
             child: const Text('确定'),
           ),

@@ -5,7 +5,8 @@ from database import get_db
 from models.account import Account, BankCard, RiskQuestionnaire
 from schemas.account import (
     AccountCreate, BankCardAdd, AccountResponse, BankCardResponse,
-    PasswordResetRequest, TradePasswordResetRequest
+    PasswordResetRequest, TradePasswordResetRequest, IdCardOcrRequest,
+    IdCardOcrResponse, BankCardOcrRequest, BankCardOcrResponse
 )
 from services.validation_service import (
     validate_id_card, validate_id_card_expire, validate_trade_password,
@@ -85,6 +86,61 @@ async def open_account(account_data: AccountCreate, user_id: int = Depends(get_u
     db.refresh(account)
 
     return {"message": "开户成功", "account_id": account.id}
+
+@router.post("/ocr/id-card", response_model=IdCardOcrResponse)
+async def ocr_id_card(request: IdCardOcrRequest, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
+    """身份证OCR识别"""
+    # Mock OCR - in production, use actual OCR service like Baidu, Alibaba, etc.
+    # For demo, return mock data based on image_type
+    if request.image_type == "front":
+        return IdCardOcrResponse(
+            real_name="张三",
+            id_card="110101199001011234",
+            gender="男",
+            nation="汉",
+            birth_date="1990-01-01",
+            address="北京市朝阳区某街道某小区",
+            id_card_expire="2035-01-01",
+            valid_date="2025-01-01至2035-01-01",
+            issued_by="北京市公安局朝阳分局"
+        )
+    else:  # back
+        return IdCardOcrResponse(
+            valid_date="2025-01-01至2035-01-01",
+            issued_by="北京市公安局朝阳分局"
+        )
+
+@router.post("/ocr/bank-card", response_model=BankCardOcrResponse)
+async def ocr_bank_card(request: BankCardOcrRequest, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
+    """银行卡OCR识别"""
+    # Mock OCR - in production, use actual OCR service
+    # For demo, return mock data
+    return BankCardOcrResponse(
+        bank_name="中国工商银行",
+        bank_code="ICBC",
+        card_number="6222021234567890123",
+        card_type="储蓄卡"
+    )
+
+@router.post("/verify/bank-card")
+async def verify_bank_card(
+    bank_code: str,
+    card_number: str,
+    phone: str,
+    sms_code: str,
+    user_id: int = Depends(get_user_id_from_token),
+    db: Session = Depends(get_db)
+):
+    """验证银行卡四要素"""
+    # Mock validation - in production, call bank verification API
+    # 验证规则：银行卡号长度16-19位，手机号11位，验证码mock为123456
+    if len(card_number) < 16 or len(card_number) > 19:
+        raise HTTPException(status_code=400, detail="银行卡号格式不正确")
+    if len(phone) != 11:
+        raise HTTPException(status_code=400, detail="手机号格式不正确")
+    if sms_code != "123456":  # Mock验证码
+        raise HTTPException(status_code=400, detail="验证码错误")
+    return {"message": "银行卡验证成功", "verified": True}
 
 @router.get("/info", response_model=AccountResponse)
 async def get_account_info(user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):

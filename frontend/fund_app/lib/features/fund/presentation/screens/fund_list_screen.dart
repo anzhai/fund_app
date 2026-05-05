@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/error_widget.dart';
+import '../../../../core/utils/account_guard.dart';
 import '../../domain/entities/fund.dart';
 import '../providers/fund_provider.dart';
 import '../widgets/fund_card.dart';
@@ -91,13 +92,13 @@ class _FundListScreenState extends ConsumerState<FundListScreen> {
   }
 }
 
-class _FundDetailSheet extends StatelessWidget {
+class _FundDetailSheet extends ConsumerWidget {
   final Fund fund;
 
   const _FundDetailSheet({required this.fund});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
       minChildSize: 0.3,
@@ -239,12 +240,7 @@ class _FundDetailSheet extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('购买 ${fund.fundName}')),
-                    );
-                  },
+                  onPressed: () => _handleBuy(context, ref, fund),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
@@ -256,6 +252,45 @@ class _FundDetailSheet extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _handleBuy(BuildContext context, WidgetRef ref, Fund fund) async {
+    final result = await AccountGuard.verify(
+      ref: ref,
+      context: context,
+      requiredRiskLevel: _mapRiskLevel(fund.riskLevel),
+    );
+    if (!context.mounted) return;
+
+    switch (result) {
+      case AccountVerificationResult.verified:
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('购买 ${fund.fundName}')),
+        );
+        break;
+      case AccountVerificationResult.needOpenAccount:
+      case AccountVerificationResult.needRiskAssessment:
+      case AccountVerificationResult.riskAssessmentExpired:
+      case AccountVerificationResult.riskLevelMismatch:
+        // Dialog already shown by AccountGuard
+        break;
+      case AccountVerificationResult.notLoggedIn:
+        break;
+    }
+  }
+
+  String? _mapRiskLevel(String? level) {
+    // Map fund risk level to account guard risk level
+    // e.g., "中风险" -> "C3"
+    final mapping = {
+      '低风险': 'C1',
+      '中低风险': 'C2',
+      '中风险': 'C3',
+      '中高风险': 'C4',
+      '高风险': 'C5',
+    };
+    return mapping[level];
   }
 }
 
