@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -45,6 +46,8 @@ class _AccountOpenScreenState extends ConsumerState<AccountOpenScreen> {
 
   String? _frontIdCardBase64;
   String? _backIdCardBase64;
+  Uint8List? _frontIdCardBytes;
+  Uint8List? _backIdCardBytes;
   bool _isUploading = false;
   bool _countingDown = false;
   int _countdownSeconds = 0;
@@ -79,14 +82,48 @@ class _AccountOpenScreenState extends ConsumerState<AccountOpenScreen> {
 
   Future<void> _pickAndUploadImage(bool isFront) async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.camera, maxWidth: 1024, maxHeight: 1024);
+
+    // Show bottom sheet to choose camera or gallery
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('拍照'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('从相册选择'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    final image = await picker.pickImage(source: source, maxWidth: 1024, maxHeight: 1024);
     if (image == null) return;
 
     final bytes = await image.readAsBytes();
     final base64Data = base64Encode(bytes);
     final imageType = isFront ? 'front' : 'back';
 
-    setState(() => _isUploading = true);
+    setState(() {
+      _isUploading = true;
+      if (isFront) {
+        _frontIdCardBase64 = base64Data;
+        _frontIdCardBytes = bytes;
+      } else {
+        _backIdCardBase64 = base64Data;
+        _backIdCardBytes = bytes;
+      }
+    });
 
     try {
       final apiClient = ApiClient();
@@ -99,7 +136,6 @@ class _AccountOpenScreenState extends ConsumerState<AccountOpenScreen> {
       );
 
       if (isFront) {
-        _frontIdCardBase64 = base64Data;
         if (response.data['real_name'] != null) {
           _realNameController.text = response.data['real_name'];
         }
@@ -113,7 +149,6 @@ class _AccountOpenScreenState extends ConsumerState<AccountOpenScreen> {
         }
         showSnackBar('身份证正面识别成功');
       } else {
-        _backIdCardBase64 = base64Data;
         if (response.data['valid_date'] != null && _idCardExpireDate == null) {
           final match = RegExp(r'(\d{4}-\d{2}-\d{2})至(\d{4}-\d{2}-\d{2})').firstMatch(response.data['valid_date']);
           if (match != null) {
@@ -400,29 +435,66 @@ class _AccountOpenScreenState extends ConsumerState<AccountOpenScreen> {
 
   Widget _buildIdCardUploadBox(bool isFront, String label, IconData icon) {
     final hasImage = isFront ? _frontIdCardBase64 != null : _backIdCardBase64 != null;
-    return InkWell(
-      onTap: () => _pickAndUploadImage(isFront),
-      child: Container(
-        height: 180,
-        decoration: BoxDecoration(
-          border: Border.all(color: hasImage ? Colors.blue : Colors.grey[300]!, width: hasImage ? 2 : 1),
-          borderRadius: BorderRadius.circular(12),
-          color: hasImage ? Colors.blue[50] : null,
+    final imageBytes = isFront ? _frontIdCardBytes : _backIdCardBytes;
+
+    // OCR info to display below image
+    final ocrInfo = isFront
+        ? (_realNameController.text.isNotEmpty || _idCardController.text.isNotEmpty
+            ? '${_realNameController.text} | ${_idCardController.text}'
+            : null)
+        : (_idCardExpireDate != null
+            ? '有效期至: ${_formatDate(_idCardExpireDate)}'
+            : null);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () => _pickAndUploadImage(isFront),
+          child: Container(
+            height: 140,
+            decoration: BoxDecoration(
+              border: Border.all(color: hasImage ? Colors.blue : Colors.grey[300]!, width: hasImage ? 2 : 1),
+              borderRadius: BorderRadius.circular(12),
+              color: hasImage ? Colors.blue[50] : null,
+            ),
+            child: hasImage && imageBytes != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(11),
+                    child: Image.memory(
+                      imageBytes,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: 140,
+                    ),
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(icon, size: 48, color: Colors.grey[400]),
+                      const SizedBox(height: 8),
+                      Text(label, style: TextStyle(color: Colors.grey[600])),
+                    ],
+                  ),
+          ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 48, color: hasImage ? Colors.blue : Colors.grey[400]),
-            const SizedBox(height: 8),
-            Text(label, style: TextStyle(color: hasImage ? Colors.blue : Colors.grey[600])),
-            if (hasImage) ...[
-              const SizedBox(height: 4),
-              const Icon(Icons.check_circle, color: Colors.green, size: 20),
-              Text('已上传', style: TextStyle(color: Colors.green, fontSize: 12)),
+        if (hasImage && ocrInfo != null) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.green, size: 16),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  ocrInfo,
+                  style: const TextStyle(fontSize: 12, color: Colors.green),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
-          ],
-        ),
-      ),
+          ),
+        ],
+      ],
     );
   }
 

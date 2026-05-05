@@ -85,3 +85,9 @@ class TradePasswordResetRequest(BaseModel):
     sms_code: str = Field(..., description="短信验证码")
     new_password: str = Field(..., min_length=6, max_length=6, description="新交易密码")
     confirm_password: str = Field(..., description="确认密码")
+
+class BankCardVerifyRequest(BaseModel):
+    bank_code: str = Field(..., description="银行代码")
+    card_number: str = Field(..., description="银行卡号")
+    phone: str = Field(..., description="预留手机号")
+    sms_code: str = Field(..., description="短信验证码")

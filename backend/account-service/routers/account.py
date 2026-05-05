@@ -6,7 +6,8 @@ from models.account import Account, BankCard, RiskQuestionnaire
 from schemas.account import (
     AccountCreate, BankCardAdd, AccountResponse, BankCardResponse,
     PasswordResetRequest, TradePasswordResetRequest, IdCardOcrRequest,
-    IdCardOcrResponse, BankCardOcrRequest, BankCardOcrResponse
+    IdCardOcrResponse, BankCardOcrRequest, BankCardOcrResponse,
+    BankCardVerifyRequest
 )
 from services.validation_service import (
     validate_id_card, validate_id_card_expire, validate_trade_password,
@@ -17,7 +18,7 @@ import httpx
 router = APIRouter(prefix="/account", tags=["开户"])
 
 # Auth service base URL for cross-service communication
-AUTH_SERVICE_URL = "http://localhost:8001/auth"
+AUTH_SERVICE_URL = "http://auth-service:8001/auth"
 
 async def get_user_id_from_token(authorization: str = Header(...)) -> int:
     """Extract user_id from auth token by calling auth service"""
@@ -124,21 +125,18 @@ async def ocr_bank_card(request: BankCardOcrRequest, user_id: int = Depends(get_
 
 @router.post("/verify/bank-card")
 async def verify_bank_card(
-    bank_code: str,
-    card_number: str,
-    phone: str,
-    sms_code: str,
+    request: BankCardVerifyRequest,
     user_id: int = Depends(get_user_id_from_token),
     db: Session = Depends(get_db)
 ):
     """验证银行卡四要素"""
     # Mock validation - in production, call bank verification API
     # 验证规则：银行卡号长度16-19位，手机号11位，验证码mock为123456
-    if len(card_number) < 16 or len(card_number) > 19:
+    if len(request.card_number) < 16 or len(request.card_number) > 19:
         raise HTTPException(status_code=400, detail="银行卡号格式不正确")
-    if len(phone) != 11:
+    if len(request.phone) != 11:
         raise HTTPException(status_code=400, detail="手机号格式不正确")
-    if sms_code != "123456":  # Mock验证码
+    if request.sms_code != "123456":  # Mock验证码
         raise HTTPException(status_code=400, detail="验证码错误")
     return {"message": "银行卡验证成功", "verified": True}
 

@@ -47,5 +47,21 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+    
+    <key>NSCameraUsageDescription</key>
+    <string>相机权限将被用于身份证上传、意见反馈、在线客服等功能</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>我们需要您的 Face ID 用于人脸登录。</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>位置权限将被用于异地登录风险校验,完善个人居住地信息等功能</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>位置权限将被用于异地登录风险校验,完善个人居住地信息等功能</string>
+    <key>NSLocationUsageDescription</key>
+    <string>位置权限将被用于异地登录风险校验,完善个人居住地信息等功能</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>位置权限将被用于异地登录风险校验,完善个人居住地信息等功能</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>相册权限将被用于身份证上传、意见反馈、在线客服等功能</string>
+  
 </dict>
 </plist>

@@ -9,7 +9,7 @@ import httpx
 
 wallet_router = APIRouter(prefix="/wallet", tags=["钱包"])
 
-AUTH_SERVICE_URL = "http://localhost:8001/auth"
+AUTH_SERVICE_URL = "http://auth-service:8001/auth"
 
 async def get_user_id_from_token(authorization: str = Header(...)) -> int:
     """Extract user_id from auth token by calling auth service"""
