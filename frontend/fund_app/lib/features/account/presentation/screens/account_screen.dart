@@ -224,12 +224,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
           ElevatedButton(
             onPressed: () async {
-              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(context);
-              final success = await ref.read(accountProvider.notifier).openAccount(type: 'fund');
-              if (success && mounted) {
-                messenger.showSnackBar(const SnackBar(content: Text('开户申请已提交')));
-              }
+              context.push('/account-open');
             },
             child: const Text('确认'),
           ),

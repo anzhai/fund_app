@@ -95,9 +95,19 @@ class AccountRepositoryImpl implements AccountRepository {
   }
 
   @override
-  Future<Either<Failure, AccountOpen>> openAccount({required String type}) async {
+  Future<Either<Failure, AccountOpen>> openAccount({
+    required String realName,
+    required String idCard,
+    required DateTime idCardExpire,
+    required String tradePassword,
+  }) async {
     try {
-      final account = await _remoteDataSource.openAccount(type: type);
+      final account = await _remoteDataSource.openAccount(
+        realName: realName,
+        idCard: idCard,
+        idCardExpire: idCardExpire,
+        tradePassword: tradePassword,
+      );
       return Right(account);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));

@@ -12,32 +12,12 @@ import '../../features/trade/presentation/screens/trade_screen.dart';
 import '../../features/user/presentation/screens/user_screen.dart';
 import '../../features/wallet/presentation/screens/wallet_screen.dart';
 import '../../features/account/presentation/screens/account_screen.dart';
+import '../../features/account/presentation/screens/account_open_screen.dart';
+import '../../features/account/presentation/screens/risk_assessment_screen.dart';
+import '../../features/account/presentation/screens/bank_card_screen.dart';
+import '../../features/trade/presentation/screens/trade_history_screen.dart';
 import '../widgets/main_scaffold.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
-
-class AccountOpenScreen extends StatelessWidget {
-  const AccountOpenScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('开户')));
-}
-
-class RiskAssessmentScreen extends StatelessWidget {
-  const RiskAssessmentScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('风险测评')));
-}
-
-class BankCardScreen extends StatelessWidget {
-  const BankCardScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('银行卡')));
-}
-
-class TradeHistoryScreen extends StatelessWidget {
-  const TradeHistoryScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('交易历史')));
-}
 
 // Router Provider with Auth Guard
 final routerProvider = Provider<GoRouter>((ref) {

@@ -42,10 +42,20 @@ class AccountRemoteDataSource {
     return RiskAssessmentModel.fromJson(response.data);
   }
 
-  Future<AccountOpenModel> openAccount({required String type}) async {
+  Future<AccountOpenModel> openAccount({
+    required String realName,
+    required String idCard,
+    required DateTime idCardExpire,
+    required String tradePassword,
+  }) async {
     final response = await _apiClient.post(
-      '${AppConstants.tradeBaseUrl}/accounts/open',
-      data: {'type': type},
+      '${AppConstants.accountBaseUrl}/account/open',
+      data: {
+        'real_name': realName,
+        'id_card': idCard,
+        'id_card_expire': idCardExpire.toIso8601String(),
+        'trade_password': tradePassword,
+      },
     );
     return AccountOpenModel.fromJson(response.data);
   }

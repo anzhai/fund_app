@@ -112,9 +112,19 @@ class AccountNotifier extends StateNotifier<AccountState> {
     );
   }
 
-  Future<bool> openAccount({required String type}) async {
+  Future<bool> openAccount({
+    required String realName,
+    required String idCard,
+    required DateTime idCardExpire,
+    required String tradePassword,
+  }) async {
     state = state.copyWith(isLoading: true, error: null);
-    final result = await _repository.openAccount(type: type);
+    final result = await _repository.openAccount(
+      realName: realName,
+      idCard: idCard,
+      idCardExpire: idCardExpire,
+      tradePassword: tradePassword,
+    );
     return result.fold(
       (failure) {
         state = state.copyWith(isLoading: false, error: failure.message);
