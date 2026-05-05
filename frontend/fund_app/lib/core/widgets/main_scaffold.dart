@@ -7,6 +7,8 @@ class MainScaffold extends StatelessWidget {
 
   const MainScaffold({super.key, required this.child});
 
+  static const _mainRoutes = ['/', '/funds', '/portfolio', '/trade', '/user'];
+
   int _calculateSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
     if (location == '/') return 0;
@@ -15,6 +17,11 @@ class MainScaffold extends StatelessWidget {
     if (location.startsWith('/trade')) return 3;
     if (location.startsWith('/user')) return 4;
     return 0;
+  }
+
+  bool _isMainRoute(BuildContext context) {
+    final location = GoRouterState.of(context).uri.path;
+    return _mainRoutes.contains(location);
   }
 
   void _onItemTapped(BuildContext context, int index) {
@@ -41,38 +48,40 @@ class MainScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _calculateSelectedIndex(context),
-        onTap: (index) => _onItemTapped(context, index),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: '首页',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_outlined),
-            activeIcon: Icon(Icons.account_balance),
-            label: '基金',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.pie_chart_outline),
-            activeIcon: Icon(Icons.pie_chart),
-            label: '组合',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.swap_horiz_outlined),
-            activeIcon: Icon(Icons.swap_horiz),
-            label: '交易',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: '我的',
-          ),
-        ],
-      ),
+      bottomNavigationBar: _isMainRoute(context)
+          ? BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
+              currentIndex: _calculateSelectedIndex(context),
+              onTap: (index) => _onItemTapped(context, index),
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home),
+                  label: '首页',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.account_balance_outlined),
+                  activeIcon: Icon(Icons.account_balance),
+                  label: '基金',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.pie_chart_outline),
+                  activeIcon: Icon(Icons.pie_chart),
+                  label: '组合',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.swap_horiz_outlined),
+                  activeIcon: Icon(Icons.swap_horiz),
+                  label: '交易',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline),
+                  activeIcon: Icon(Icons.person),
+                  label: '我的',
+                ),
+              ],
+            )
+          : null,
     );
   }
 }

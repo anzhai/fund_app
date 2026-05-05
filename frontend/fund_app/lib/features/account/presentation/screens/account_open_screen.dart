@@ -9,6 +9,7 @@ import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/api_client.dart';
 import '../providers/account_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class AccountOpenScreen extends ConsumerStatefulWidget {
   const AccountOpenScreen({super.key});
@@ -51,6 +52,19 @@ class _AccountOpenScreenState extends ConsumerState<AccountOpenScreen> {
   bool _isUploading = false;
   bool _countingDown = false;
   int _countdownSeconds = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Check if user is authenticated
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = ref.read(authProvider);
+      if (!authState.isAuthenticated) {
+        showSnackBar('请先登录后再开户');
+        context.go('/login');
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -218,9 +232,8 @@ class _AccountOpenScreenState extends ConsumerState<AccountOpenScreen> {
           ? null : '请输入正确的银行卡号';
       _bankNameError = _bankNameController.text.isEmpty ? '请输入所属银行' : null;
       _phoneError = _phoneController.text.length == 11 ? null : '请输入正确的手机号';
-      _smsCodeError = _smsCodeController.text.length == 6 ? null : '请输入6位验证码';
     });
-    return _bankCardError == null && _bankNameError == null && _phoneError == null && _smsCodeError == null;
+    return _bankCardError == null && _bankNameError == null && _phoneError == null;
   }
 
   bool _validateStep3() {
@@ -274,48 +287,95 @@ class _AccountOpenScreenState extends ConsumerState<AccountOpenScreen> {
     return s[0] == s[5] && s[1] == s[4] && s[2] == s[3];
   }
 
+  Future<void> _verifyBankCard() async {
+    if (!_validateStep2()) return;
+
+    // 仅验证并进入下一步，实际绑定在开户成功后进行
+    showSnackBar('银行卡信息已保存，将在开户完成后绑定');
+    setState(() => _currentStep = 3);
+  }
+
   Future<void> _submitAccountOpen() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_validateStep3()) return;
 
-    final success = await ref.read(accountProvider.notifier).openAccount(
-      realName: _realNameController.text.trim(),
-      idCard: _idCardController.text.trim(),
-      idCardExpire: _idCardExpireDate!,
-      tradePassword: _tradePasswordController.text,
-    );
+    // Double check authentication before submitting
+    final authState = ref.read(authProvider);
+    print('🔐 认证状态检查:');
+    print('   - isAuthenticated: ${authState.isAuthenticated}');
+    print('   - user: ${authState.user?.phone ?? "null"}');
+    print('   - isUserNotFound: ${authState.isUserNotFound}');
+    
+    if (!authState.isAuthenticated) {
+      showSnackBar('用户未登录，请先登录');
+      context.go('/login');
+      return;
+    }
 
-    if (success && mounted) {
-      context.go('/account-open-success');
-    } else {
-      final state = ref.read(accountProvider);
-      if (state.error != null) {
-        showSnackBar(state.error!);
+    // Show loading indicator
+    setState(() {}); // Trigger rebuild to show loading state
+
+    try {
+      print('\n📤 开始提交开户申请...');
+      print('   - 姓名: ${_realNameController.text.trim()}');
+      print('   - 身份证: ${_idCardController.text.trim()}');
+      print('   - 有效期: $_idCardExpireDate');
+      print('   - 密码长度: ${_tradePasswordController.text.length}');
+      print('   - API Base URL: ${AppConstants.accountBaseUrl}');
+      
+      final success = await ref.read(accountProvider.notifier).openAccount(
+        realName: _realNameController.text.trim(),
+        idCard: _idCardController.text.trim(),
+        idCardExpire: _idCardExpireDate!,
+        tradePassword: _tradePasswordController.text,
+      );
+
+      print('\n📥 开户结果: $success');
+
+      if (success && mounted) {
+        print('✅ 开户成功，开始绑定银行卡...');
+        // After account is opened, add the bank card
+        await _addBankCardAfterAccountOpen();
+        
+        print('✅ 全部完成，跳转到成功页面');
+        context.go('/account-open-success');
+      } else {
+        final state = ref.read(accountProvider);
+        if (state.error != null) {
+          print('❌ 开户失败错误信息: ${state.error!}');
+          showSnackBar('开户失败: ${state.error!}');
+        } else {
+          print('❌ 开户失败: 未知错误（error为null）');
+          showSnackBar('开户失败，请稍后重试');
+        }
       }
+    } catch (e, stackTrace) {
+      print('\n❌ 开户异常捕获:');
+      print('   - 错误类型: ${e.runtimeType}');
+      print('   - 错误信息: $e');
+      print('   - 堆栈跟踪:\n$stackTrace');
+      showSnackBar('开户异常: ${e.toString()}');
     }
   }
 
-  Future<void> _verifyBankCard() async {
-    if (!_validateStep2()) return;
-
+  Future<void> _addBankCardAfterAccountOpen() async {
     try {
       final apiClient = ApiClient();
       await apiClient.post(
-        '${AppConstants.accountBaseUrl}/account/verify/bank-card',
+        '${AppConstants.accountBaseUrl}/account/bank-card',
         data: {
+          'bank_name': _bankNameController.text,
           'bank_code': _bankCodeController.text,
           'card_number': _bankCardController.text,
-          'phone': _phoneController.text,
-          'sms_code': _smsCodeController.text,
+          'card_type': '储蓄卡',
+          'is_default': true,
         },
       );
-
-      if (mounted) {
-        showSnackBar('银行卡验证成功');
-        setState(() => _currentStep = 3);
-      }
+      showSnackBar('银行卡绑定成功');
     } catch (e) {
-      showSnackBar('验证失败: ${e.toString()}');
+      // If bank card binding fails, still allow user to continue
+      // They can add it later from the account settings
+      showSnackBar('账户开通成功，但银行卡绑定失败，请稍后在账户设置中重新绑定');
     }
   }
 
@@ -546,7 +606,7 @@ class _AccountOpenScreenState extends ConsumerState<AccountOpenScreen> {
       children: [
         const Text('添加银行卡', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Text('请绑定您名下的银行卡', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+        Text('请绑定您名下的银行卡（将在开户完成后自动绑定）', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
         const SizedBox(height: 24),
         Row(
           children: [
@@ -595,27 +655,6 @@ class _AccountOpenScreenState extends ConsumerState<AccountOpenScreen> {
           decoration: InputDecoration(labelText: '预留手机号', prefixIcon: const Icon(Icons.phone), border: const OutlineInputBorder(), errorText: _phoneError),
           keyboardType: TextInputType.phone,
           maxLength: 11,
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _smsCodeController,
-                decoration: InputDecoration(labelText: '验证码', prefixIcon: const Icon(Icons.sms), border: const OutlineInputBorder(), errorText: _smsCodeError),
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-              ),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 100,
-              child: OutlinedButton(
-                onPressed: _phoneError == null && !_countingDown ? _sendSmsCode : null,
-                child: Text(_countingDown ? '$_countdownSeconds秒' : '获取验证码'),
-              ),
-            ),
-          ],
         ),
         const SizedBox(height: 32),
         Row(

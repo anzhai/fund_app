@@ -31,9 +31,18 @@ async def get_user_id_from_token(authorization: str = Header(...)) -> int:
             if response.status_code == 200:
                 user_data = response.json()
                 return user_data["id"]
-            raise HTTPException(status_code=401, detail="Invalid token")
+            elif response.status_code == 404:
+                raise HTTPException(status_code=404, detail="用户不存在")
+            else:
+                raise HTTPException(status_code=401, detail=f"Invalid token (status: {response.status_code})")
+    except httpx.ConnectError:
+        raise HTTPException(status_code=503, detail="认证服务不可用，请稍后重试")
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="认证服务超时")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
 
 @router.get("/status")
 async def get_account_status(user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):

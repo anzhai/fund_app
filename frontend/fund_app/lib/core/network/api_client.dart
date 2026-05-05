@@ -120,12 +120,14 @@ class ApiClient {
             message = data['message'].toString();
           }
         }
-        // Check for user not found first
-        if (statusCode == 404 || message.contains('不存在') || message.contains('未注册') || message.contains('用户不存在')) {
-          return AuthException(message: '用户不存在，请先注册');
-        }
+        // Check for specific authentication errors
         if (statusCode == 401) {
           return AuthException(message: message);
+        }
+        // Only treat as auth exception for explicit user not found errors
+        if ((statusCode == 404 || statusCode == 401) && 
+            (message.contains('用户不存在') || message.contains('请先注册') || message.contains('未登录'))) {
+          return AuthException(message: '用户不存在，请先注册');
         }
         return ServerException(message: message, statusCode: statusCode);
       case DioExceptionType.cancel:
