@@ -14,7 +14,7 @@ class WalletModel extends Wallet {
       id: json['id'] as int,
       userId: json['user_id'] as int,
       balance: (json['balance'] as num).toDouble(),
-      frozenAmount: (json['frozen_amount'] as num?)?.toDouble() ?? 0.0,
+      frozenAmount: (json['frozen_balance'] as num?)?.toDouble() ?? 0.0,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String)
           : null,
@@ -38,10 +38,10 @@ class TradeOrderModel extends TradeOrder {
   factory TradeOrderModel.fromJson(Map<String, dynamic> json) {
     return TradeOrderModel(
       id: json['id'] as int,
-      orderNo: json['order_no'] as String,
+      orderNo: 'ORD${json['id']}', // Backend doesn't return order_no, generate one
       fundCode: json['fund_code'] as String,
       fundName: json['fund_name'] as String? ?? '',
-      type: json['type'] as String,
+      type: json['trade_type'] as String? ?? json['type'] as String? ?? '',
       amount: (json['amount'] as num).toDouble(),
       shares: (json['shares'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] as String,

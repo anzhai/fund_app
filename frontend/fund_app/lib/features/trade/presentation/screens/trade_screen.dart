@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/utils/account_guard.dart';
 import '../../domain/entities/trade.dart';
 import '../providers/trade_provider.dart';
 
@@ -93,11 +94,7 @@ class _BuyTab extends ConsumerWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('买入功能')),
-                        );
-                      },
+                      onPressed: () => _handleBuy(context, ref),
                       child: const Text('确认买入'),
                     ),
                   ),
@@ -110,6 +107,27 @@ class _BuyTab extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _handleBuy(BuildContext context, WidgetRef ref) async {
+    final result = await AccountGuard.verify(ref: ref, context: context);
+    if (!context.mounted) return;
+
+    switch (result) {
+      case AccountVerificationResult.verified:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('买入功能')),
+        );
+        break;
+      case AccountVerificationResult.needOpenAccount:
+        context.go('/account-open');
+        break;
+      case AccountVerificationResult.needRiskAssessment:
+        context.go('/account/risk-assessment');
+        break;
+      case AccountVerificationResult.notLoggedIn:
+        break;
+    }
   }
 
   Widget _buildHistorySection(BuildContext context, TradeState state) {
@@ -182,11 +200,7 @@ class _SellTab extends ConsumerWidget {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('卖出功能')),
-                        );
-                      },
+                      onPressed: () => _handleSell(context, ref),
                       child: const Text('确认卖出'),
                     ),
                   ),
@@ -199,6 +213,27 @@ class _SellTab extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _handleSell(BuildContext context, WidgetRef ref) async {
+    final result = await AccountGuard.verify(ref: ref, context: context);
+    if (!context.mounted) return;
+
+    switch (result) {
+      case AccountVerificationResult.verified:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('卖出功能')),
+        );
+        break;
+      case AccountVerificationResult.needOpenAccount:
+        context.go('/account-open');
+        break;
+      case AccountVerificationResult.needRiskAssessment:
+        context.go('/account/risk-assessment');
+        break;
+      case AccountVerificationResult.notLoggedIn:
+        break;
+    }
   }
 
   Widget _buildHistorySection(BuildContext context, TradeState state) {

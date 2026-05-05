@@ -113,8 +113,16 @@ class ApiClient {
         final statusCode = e.response?.statusCode;
         final data = e.response?.data;
         String message = '服务器错误';
-        if (data is Map && data.containsKey('detail')) {
-          message = data['detail'].toString();
+        if (data is Map) {
+          if (data.containsKey('detail')) {
+            message = data['detail'].toString();
+          } else if (data.containsKey('message')) {
+            message = data['message'].toString();
+          }
+        }
+        // Check for user not found first
+        if (statusCode == 404 || message.contains('不存在') || message.contains('未注册') || message.contains('用户不存在')) {
+          return AuthException(message: '用户不存在，请先注册');
         }
         if (statusCode == 401) {
           return AuthException(message: message);

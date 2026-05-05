@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/widgets/loading_widget.dart';
 import '../../../../core/widgets/error_widget.dart';
+import '../../../../core/utils/account_guard.dart';
 import '../../domain/entities/wallet.dart';
 import '../providers/wallet_provider.dart';
 
@@ -122,7 +124,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
       children: [
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () => _showRechargeDialog(context),
+            onPressed: () => _handleRecharge(context),
             icon: const Icon(Icons.add),
             label: const Text('充值'),
             style: ElevatedButton.styleFrom(
@@ -133,7 +135,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
         const SizedBox(width: 16),
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: () => _showWithdrawDialog(context),
+            onPressed: () => _handleWithdraw(context),
             icon: const Icon(Icons.remove),
             label: const Text('提现'),
             style: OutlinedButton.styleFrom(
@@ -143,6 +145,44 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
         ),
       ],
     );
+  }
+
+  Future<void> _handleRecharge(BuildContext context) async {
+    final result = await AccountGuard.verify(ref: ref, context: context);
+    if (!mounted) return;
+
+    switch (result) {
+      case AccountVerificationResult.verified:
+        _showRechargeDialog(context);
+        break;
+      case AccountVerificationResult.needOpenAccount:
+        context.go('/account-open');
+        break;
+      case AccountVerificationResult.needRiskAssessment:
+        context.go('/account/risk-assessment');
+        break;
+      case AccountVerificationResult.notLoggedIn:
+        break;
+    }
+  }
+
+  Future<void> _handleWithdraw(BuildContext context) async {
+    final result = await AccountGuard.verify(ref: ref, context: context);
+    if (!mounted) return;
+
+    switch (result) {
+      case AccountVerificationResult.verified:
+        _showWithdrawDialog(context);
+        break;
+      case AccountVerificationResult.needOpenAccount:
+        context.go('/account-open');
+        break;
+      case AccountVerificationResult.needRiskAssessment:
+        context.go('/account/risk-assessment');
+        break;
+      case AccountVerificationResult.notLoggedIn:
+        break;
+    }
   }
 
   Widget _buildOrdersSection(List<TradeOrder> orders) {

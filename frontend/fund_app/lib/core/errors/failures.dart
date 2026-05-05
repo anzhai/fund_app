@@ -29,6 +29,16 @@ class AuthFailure extends Failure {
   AuthFailure({required super.message});
 }
 
+/// User Not Found Failure - 用户不存在（未注册）
+class UserNotFoundFailure extends Failure {
+  UserNotFoundFailure({required super.message});
+}
+
+/// Account Not Verified Failure - 账户未实名认证
+class AccountNotVerifiedFailure extends Failure {
+  AccountNotVerifiedFailure({required super.message});
+}
+
 /// Validation Failure
 class ValidationFailure extends Failure {
   final Map<String, String>? fieldErrors;

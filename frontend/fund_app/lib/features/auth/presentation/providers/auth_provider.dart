@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/errors/failures.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
@@ -18,12 +19,14 @@ class AuthState {
   final User? user;
   final bool isLoading;
   final bool isAuthenticated;
+  final bool isUserNotFound;
   final String? error;
 
   const AuthState({
     this.user,
     this.isLoading = false,
     this.isAuthenticated = false,
+    this.isUserNotFound = false,
     this.error,
   });
 
@@ -31,12 +34,14 @@ class AuthState {
     User? user,
     bool? isLoading,
     bool? isAuthenticated,
+    bool? isUserNotFound,
     String? error,
   }) {
     return AuthState(
       user: user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
+      isUserNotFound: isUserNotFound ?? this.isUserNotFound,
       error: error,
     );
   }
@@ -55,11 +60,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<bool> login({required String phone, required String password}) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, error: null, isUserNotFound: false);
     final result = await _repository.login(phone: phone, password: password);
     return result.fold(
       (failure) {
-        state = state.copyWith(isLoading: false, error: failure.message);
+        final isNotFound = failure is UserNotFoundFailure;
+        state = state.copyWith(
+          isLoading: false,
+          error: failure.message,
+          isUserNotFound: isNotFound,
+        );
         return false;
       },
       (user) async {

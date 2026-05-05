@@ -125,7 +125,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       password: password,
     );
 
-    if (success && mounted) {
+    if (!mounted) return;
+
+    final authState = ref.read(authProvider);
+    if (authState.isUserNotFound) {
+      // 用户不存在，跳转到注册页面
+      context.go('/register');
+      return;
+    }
+
+    if (success) {
       context.go('/');
     }
   }

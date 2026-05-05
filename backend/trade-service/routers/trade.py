@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from decimal import Decimal
 from datetime import datetime, timedelta
@@ -11,8 +11,26 @@ from schemas.trade import (
     TradeOrderResponse, SIPPlanResponse
 )
 from services.risk_service import check_amount_limit
+import httpx
 
 router = APIRouter(prefix="/trade", tags=["交易"])
+
+AUTH_SERVICE_URL = "http://localhost:8001/auth"
+
+async def get_user_id_from_token(authorization: str = Header(...)) -> int:
+    """Extract user_id from auth token by calling auth service"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{AUTH_SERVICE_URL}/me",
+                headers={"Authorization": authorization}
+            )
+            if response.status_code == 200:
+                user_data = response.json()
+                return user_data["id"]
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
 def get_wallet_or_create(db: Session, user_id: int) -> Wallet:
     wallet = db.query(Wallet).filter(Wallet.user_id == user_id).first()
@@ -24,10 +42,10 @@ def get_wallet_or_create(db: Session, user_id: int) -> Wallet:
     return wallet
 
 @router.post("/purchase", response_model=TradeOrderResponse)
-def purchase(purchase_data: PurchaseRequest, user_id: int, db: Session = Depends(get_db)):
+async def purchase(purchase_data: PurchaseRequest, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     # Note: In production, fetch fund from fund-service via REST call
     # For MVP, we assume fund exists and risk check passes
-    
+
     can_purchase, msg = check_amount_limit(purchase_data.amount)
     if not can_purchase:
         raise HTTPException(status_code=400, detail=msg)
@@ -65,7 +83,7 @@ def purchase(purchase_data: PurchaseRequest, user_id: int, db: Session = Depends
     return order
 
 @router.post("/redeem", response_model=TradeOrderResponse)
-def redeem(redeem_data: RedeemRequest, user_id: int, db: Session = Depends(get_db)):
+async def redeem(redeem_data: RedeemRequest, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     nav = Decimal("1.0000")  # Mock NAV
     fee_rate = Decimal("0.005")  # Mock fee rate
     amount = redeem_data.shares * nav
@@ -95,7 +113,7 @@ def redeem(redeem_data: RedeemRequest, user_id: int, db: Session = Depends(get_d
     return order
 
 @router.post("/subscribe", response_model=TradeOrderResponse)
-def subscribe(subscribe_data: SubscribeRequest, user_id: int, db: Session = Depends(get_db)):
+async def subscribe(subscribe_data: SubscribeRequest, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """认购新基金"""
     can_purchase, msg = check_amount_limit(subscribe_data.amount)
     if not can_purchase:
@@ -133,7 +151,7 @@ def subscribe(subscribe_data: SubscribeRequest, user_id: int, db: Session = Depe
     return order
 
 @router.post("/switch", response_model=TradeOrderResponse)
-def switch_fund(switch_data: SwitchRequest, user_id: int, db: Session = Depends(get_db)):
+async def switch_fund(switch_data: SwitchRequest, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """基金转换"""
     nav = Decimal("1.0000")
     fee_rate = Decimal("0.003")
@@ -160,24 +178,24 @@ def switch_fund(switch_data: SwitchRequest, user_id: int, db: Session = Depends(
     return order
 
 @router.post("/cancel", response_model=TradeOrderResponse)
-def cancel_order(cancel_data: CancelOrderRequest, user_id: int, db: Session = Depends(get_db)):
+async def cancel_order(cancel_data: CancelOrderRequest, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """撤单"""
     order = db.query(TradeOrder).filter(
         TradeOrder.id == cancel_data.order_id,
         TradeOrder.user_id == user_id,
         TradeOrder.status == "pending"
     ).first()
-    
+
     if not order:
         raise HTTPException(status_code=404, detail="订单不存在或已成交")
-    
+
     order.status = "cancelled"
     db.commit()
     db.refresh(order)
     return order
 
 @router.post("/dividend-reinvest", response_model=TradeOrderResponse)
-def dividend_reinvest(dividend_data: DividendReinvestRequest, user_id: int, db: Session = Depends(get_db)):
+async def dividend_reinvest(dividend_data: DividendReinvestRequest, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """红利再投"""
     nav = Decimal("1.0000")
     shares = dividend_data.dividend_amount / nav
@@ -202,7 +220,7 @@ def dividend_reinvest(dividend_data: DividendReinvestRequest, user_id: int, db: 
 
 # SIP (定投) endpoints
 @router.post("/sip/create", response_model=SIPPlanResponse)
-def create_sip_plan(sip_data: CreateSIPRequest, user_id: int, db: Session = Depends(get_db)):
+async def create_sip_plan(sip_data: CreateSIPRequest, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """创建定投计划"""
     # Calculate next deduction date
     now = datetime.utcnow()
@@ -233,17 +251,17 @@ def create_sip_plan(sip_data: CreateSIPRequest, user_id: int, db: Session = Depe
     return plan
 
 @router.get("/sip/list", response_model=list[SIPPlanResponse])
-def list_sip_plans(user_id: int, db: Session = Depends(get_db)):
+async def list_sip_plans(user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """查询定投计划列表"""
     return db.query(SIPPlan).filter(SIPPlan.user_id == user_id).all()
 
 @router.put("/sip/{plan_id}", response_model=SIPPlanResponse)
-def update_sip_plan(plan_id: int, update_data: UpdateSIPRequest, user_id: int, db: Session = Depends(get_db)):
+async def update_sip_plan(plan_id: int, update_data: UpdateSIPRequest, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """修改定投计划"""
     plan = db.query(SIPPlan).filter(SIPPlan.id == plan_id, SIPPlan.user_id == user_id).first()
     if not plan:
         raise HTTPException(status_code=404, detail="定投计划不存在")
-    
+
     if update_data.amount is not None:
         plan.amount = update_data.amount
     if update_data.frequency is not None:
@@ -252,23 +270,23 @@ def update_sip_plan(plan_id: int, update_data: UpdateSIPRequest, user_id: int, d
         plan.day_of_period = update_data.day_of_period
     if update_data.status is not None:
         plan.status = update_data.status
-    
+
     db.commit()
     db.refresh(plan)
     return plan
 
 @router.delete("/sip/{plan_id}")
-def terminate_sip_plan(plan_id: int, user_id: int, db: Session = Depends(get_db)):
+async def terminate_sip_plan(plan_id: int, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """终止定投计划"""
     plan = db.query(SIPPlan).filter(SIPPlan.id == plan_id, SIPPlan.user_id == user_id).first()
     if not plan:
         raise HTTPException(status_code=404, detail="定投计划不存在")
-    
+
     plan.status = "terminated"
     db.commit()
     return {"message": "定投计划已终止"}
 
 @router.get("/orders", response_model=list[TradeOrderResponse])
-def list_orders(user_id: int, db: Session = Depends(get_db)):
+async def list_orders(user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """查询交易记录"""
     return db.query(TradeOrder).filter(TradeOrder.user_id == user_id).order_by(TradeOrder.created_at.desc()).all()

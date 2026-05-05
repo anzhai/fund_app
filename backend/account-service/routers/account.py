@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from datetime import datetime, date, timedelta
 from database import get_db
-from models.account import Account, BankCard
+from models.account import Account, BankCard, RiskQuestionnaire
 from schemas.account import (
     AccountCreate, BankCardAdd, AccountResponse, BankCardResponse,
     PasswordResetRequest, TradePasswordResetRequest
@@ -11,11 +11,46 @@ from services.validation_service import (
     validate_id_card, validate_id_card_expire, validate_trade_password,
     validate_bank_card
 )
+import httpx
 
 router = APIRouter(prefix="/account", tags=["开户"])
 
+# Auth service base URL for cross-service communication
+AUTH_SERVICE_URL = "http://localhost:8001/auth"
+
+async def get_user_id_from_token(authorization: str = Header(...)) -> int:
+    """Extract user_id from auth token by calling auth service"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{AUTH_SERVICE_URL}/me",
+                headers={"Authorization": authorization}
+            )
+            if response.status_code == 200:
+                user_data = response.json()
+                return user_data["id"]
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
+@router.get("/status")
+async def get_account_status(user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
+    """获取账户状态"""
+    account = db.query(Account).filter(Account.user_id == user_id).first()
+    risk = db.query(RiskQuestionnaire).filter(RiskQuestionnaire.user_id == user_id).first()
+
+    has_account = account is not None and account.account_status == "active"
+    has_risk_assessment = risk is not None and risk.expire_date > date.today() if risk else False
+
+    return {
+        "has_fund_account": has_account,
+        "has_risk_assessment": has_risk_assessment,
+        "risk_level": account.risk_level if account else None,
+        "risk_expire_date": risk.expire_date.isoformat() if risk and risk.expire_date else None,
+    }
+
 @router.post("/open")
-def open_account(account_data: AccountCreate, user_id: int, db: Session = Depends(get_db)):
+async def open_account(account_data: AccountCreate, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """开户 - 上传证件、设置交易密码"""
     # Validate ID card
     valid, msg = validate_id_card(account_data.id_card)
@@ -52,7 +87,7 @@ def open_account(account_data: AccountCreate, user_id: int, db: Session = Depend
     return {"message": "开户成功", "account_id": account.id}
 
 @router.get("/info", response_model=AccountResponse)
-def get_account_info(user_id: int, db: Session = Depends(get_db)):
+async def get_account_info(user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """获取账户信息"""
     account = db.query(Account).filter(Account.user_id == user_id).first()
     if not account:
@@ -60,7 +95,7 @@ def get_account_info(user_id: int, db: Session = Depends(get_db)):
     return account
 
 @router.post("/bank-card")
-def add_bank_card(card_data: BankCardAdd, user_id: int, db: Session = Depends(get_db)):
+async def add_bank_card(card_data: BankCardAdd, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """添加银行卡"""
     # Validate bank card number
     valid, msg = validate_bank_card(card_data.card_number)
@@ -88,27 +123,27 @@ def add_bank_card(card_data: BankCardAdd, user_id: int, db: Session = Depends(ge
     return {"message": "银行卡添加成功", "card_id": card.id}
 
 @router.get("/bank-cards", response_model=list[BankCardResponse])
-def list_bank_cards(user_id: int, db: Session = Depends(get_db)):
+async def list_bank_cards(user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """查询银行卡列表"""
     return db.query(BankCard).filter(BankCard.user_id == user_id).all()
 
 @router.delete("/bank-card/{card_id}")
-def delete_bank_card(card_id: int, user_id: int, db: Session = Depends(get_db)):
+async def delete_bank_card(card_id: int, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """删除银行卡"""
     card = db.query(BankCard).filter(
         BankCard.id == card_id,
         BankCard.user_id == user_id
     ).first()
-    
+
     if not card:
         raise HTTPException(status_code=404, detail="银行卡不存在")
-    
+
     db.delete(card)
     db.commit()
     return {"message": "银行卡删除成功"}
 
 @router.put("/bank-card/{card_id}/default")
-def set_default_card(card_id: int, user_id: int, db: Session = Depends(get_db)):
+async def set_default_card(card_id: int, user_id: int = Depends(get_user_id_from_token), db: Session = Depends(get_db)):
     """设置默认银行卡"""
     card = db.query(BankCard).filter(
         BankCard.id == card_id,

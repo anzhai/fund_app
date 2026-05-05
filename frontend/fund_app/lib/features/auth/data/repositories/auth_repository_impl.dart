@@ -15,6 +15,11 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final user = await _remoteDataSource.login(phone: phone, password: password);
       return Right(user);
+    } on AuthException catch (e) {
+      if (e.message.contains('不存在') || e.message.contains('未注册')) {
+        return Left(UserNotFoundFailure(message: e.message));
+      }
+      return Left(AuthFailure(message: e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } on NetworkException catch (e) {

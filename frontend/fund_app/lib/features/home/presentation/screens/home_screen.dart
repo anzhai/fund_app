@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/utils/account_guard.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -72,25 +73,17 @@ class HomeScreen extends ConsumerWidget {
                 _QuickActionButton(
                   icon: Icons.shopping_cart,
                   label: '购买',
-                  onTap: () => context.go('/funds'),
+                  onTap: () => _handleBuy(context, ref),
                 ),
                 _QuickActionButton(
                   icon: Icons.swap_horiz,
                   label: '定投',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('定投功能')),
-                    );
-                  },
+                  onTap: () => _handleSip(context, ref),
                 ),
                 _QuickActionButton(
                   icon: Icons.history,
                   label: '记录',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('交易记录')),
-                    );
-                  },
+                  onTap: () => context.go('/trade/history'),
                 ),
               ],
             ),
@@ -123,6 +116,46 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _handleBuy(BuildContext context, WidgetRef ref) async {
+    final result = await AccountGuard.verify(ref: ref, context: context);
+    if (!context.mounted) return;
+
+    switch (result) {
+      case AccountVerificationResult.verified:
+        context.go('/funds');
+        break;
+      case AccountVerificationResult.needOpenAccount:
+        context.go('/account-open');
+        break;
+      case AccountVerificationResult.needRiskAssessment:
+        context.go('/account/risk-assessment');
+        break;
+      case AccountVerificationResult.notLoggedIn:
+        break;
+    }
+  }
+
+  Future<void> _handleSip(BuildContext context, WidgetRef ref) async {
+    final result = await AccountGuard.verify(ref: ref, context: context);
+    if (!context.mounted) return;
+
+    switch (result) {
+      case AccountVerificationResult.verified:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('定投功能')),
+        );
+        break;
+      case AccountVerificationResult.needOpenAccount:
+        context.go('/account-open');
+        break;
+      case AccountVerificationResult.needRiskAssessment:
+        context.go('/account/risk-assessment');
+        break;
+      case AccountVerificationResult.notLoggedIn:
+        break;
+    }
   }
 }
 
